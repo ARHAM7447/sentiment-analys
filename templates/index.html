@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sentiment Analysis</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* General Reset */
+        * {
+    box-sizing: border-box;
+    margin: 0; /* Reset default margin */
+    padding: 0; /* Reset default padding */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f8f9fa;
+    padding-bottom: 70px; /* Space for fixed footer */
+}
+
+/* Header and Navigation */
+.navbar {
+    background-color: #007bff;
+    padding: 15px 20px; /* Add padding for better spacing */
+}
+
+.navbar-brand, .nav-link {
+    color: #fff !important;
+    font-weight: bold;
+}
+
+/* Main Content Styling */
+.container {
+    margin: 70px auto 20px; /* Top margin for spacing below navbar, bottom for spacing above footer */
+    max-width: 700px;
+    padding: 20px; /* Add padding for content spacing */
+    background-color: #fff; /* White background for content area */
+    border-radius: 8px; /* Rounded corners for a softer look */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+}
+
+h1 {
+    color: #007bff;
+    font-size: 2em;
+    font-weight: bold;
+}
+
+/* Button Customization */
+.btn-voice, .btn-primary, .btn-secondary, .btn-history {
+    font-weight: bold;
+    margin: 10px 0; /* Consistent margin for buttons */
+}
+
+.btn-voice {
+    background-color: #28a745;
+    color: white;
+}
+
+.btn-voice:hover {
+    background-color: #218838;
+}
+
+.btn-history {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-history:hover {
+    background-color: #138496;
+}
+
+/* Sentiment Result Styling */
+.alert {
+    margin-top: 20px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Footer Styling */
+footer {
+    background-color: #007bff;
+    color: #fff;
+    padding: 15px 0;
+    text-align: center;
+    bottom: 0;
+    left: 0;
+    right: 0; /* Ensure full-width footer */
+}
+
+/* Banner Styling */
+.banner {
+    background-color: #007bff;
+    color: #fff;
+    padding: 40px 20px; /* Added horizontal padding */
+    text-align: center;
+}
+
+.banner h1 {
+    font-size: 2.5rem;
+}
+
+.banner p {
+    margin-top: 10px;
+    font-size: 1.1rem;
+}
+
+/* Simple Footer */
+.footer {
+    background-color: #333;
+    color: #f1f1f1;
+    padding: 20px 0;
+    text-align: center;
+}
+
+.footer p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.footer a:hover {
+    text-decoration: underline;
+}
+
+    </style>
+</head>
+
+<body>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg">
+        <a class="navbar-brand" href="{{ url_for('analyze_sentiment') }}">Sentiment Analysis</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('analyze_sentiment') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('view_history') }}">View History</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <section class="banner">
+        <div class="container">
+            <h1>Sentiment Analysis</h1>
+            <p>Analyze customer feedback and understand their emotions</p>
+        </div>
+    </section>
+    
+    <!-- Main Content -->
+    <div class="container">
+        <h1>Sentiment Analysis</h1>
+        <div class="form-group">
+            <label for="comment">Enter your comment:</label>
+            <textarea class="form-control" id="comment" name="comment" rows="3"></textarea>
+            <button type="button" class="btn btn-voice mt-2" onclick="startDictation()">🎤 Speak</button>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="analyzeSentiment()">Analyze</button>
+        
+        <!-- Display sentiment result -->
+        <div id="result" class="mt-4"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 Sentiment Analysis App. All Rights Reserved. <a href="#contact">Contact Us</a></p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Web Speech API for voice recognition
+        function startDictation() {
+            if (window.hasOwnProperty('webkitSpeechRecognition')) {
+                var recognition = new webkitSpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = "en-US";
+                recognition.start();
+
+                recognition.onresult = function(event) {
+                    document.getElementById('comment').value = event.results[0][0].transcript;
+                    recognition.stop();
+                };
+
+                recognition.onerror = function(event) {
+                    recognition.stop();
+                };
+            } else {
+                alert("Your browser doesn't support speech recognition.");
+            }
+        }
+
+        // Basic sentiment analysis function
+        function analyzeSentiment() {
+            var comment = document.getElementById('comment').value.toLowerCase();
+            var positiveWords = ['good', 'great', 'fantastic', 'amazing', 'happy', 'positive', 'love'];
+            var negativeWords = ['bad', 'terrible', 'awful', 'sad', 'hate', 'negative', 'horrible'];
+
+            var positiveCount = 0;
+            var negativeCount = 0;
+
+            positiveWords.forEach(function(word) {
+                if (comment.includes(word)) positiveCount++;
+            });
+
+            negativeWords.forEach(function(word) {
+                if (comment.includes(word)) negativeCount++;
+            });
+
+            var resultDiv = document.getElementById('result');
+            var sentimentText = '';
+
+            if (positiveCount > negativeCount) {
+                resultDiv.innerHTML = '<div class="alert alert-success" role="alert">Positive comment!</div>';
+                sentimentText = 'The comment is positive.';
+            } else if (negativeCount > positiveCount) {
+                resultDiv.innerHTML = '<div class="alert alert-danger" role="alert">Negative comment!</div>';
+                sentimentText = 'The comment is negative.';
+            } else {
+                resultDiv.innerHTML = '<div class="alert alert-warning" role="alert">Neutral comment!</div>';
+                sentimentText = 'The comment is neutral.';
+            }
+
+            speakResult(sentimentText);
+        }
+
+        // Speak result function
+        function speakResult(text) {
+            if ('speechSynthesis' in window) {
+                var utterance = new SpeechSynthesisUtterance(text);
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Your browser doesn't support speech synthesis.");
+            }
+        }
+    </script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>
